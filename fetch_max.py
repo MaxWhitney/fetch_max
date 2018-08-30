@@ -2,6 +2,7 @@
 # depends on sodapy.py among other things ...
 
 from sodapy import Socrata
+import csv
 import configparser
 import os
 import logging
@@ -38,26 +39,43 @@ config.read(SOCRATA_API_CONFIG_FILE)
 
 def fetch_socrata_csv(socrata_token=SOCRATA_API_KEY, 
 			socrata_domain=SOCRATA_DOMAIN,
-			socrata_id=SOCRATA_ID):
-	## will need to add some logic around when to load the file but
-	## working data connection code from here on
+			socrata_id=SOCRATA_ID,
+			data_directory=DF_DIR,
+			archive_directory=ARCH_DIR,
+			tracking_suffix=TRACKING ):
+
+	# Open a connection and certify quality by getting the record count
 	print("Obtaining client with ", socrata_token, socrata_domain, socrata_id)
 	client = Socrata(socrata_domain, socrata_token)
 	select_count = client.get(socrata_id, content_type="csv",
 				select="count(*)")
 	print("type = ", type(select_count), " select_count = ", select_count)
+	count = select_count[1][0] # apologies for the magical access.
+	print("type = ", type(count), " count = ", count)
 
-##PSEUDO CODE FOR FILE RETRIEVAL PROCESS
-# If not associated file exists
-# Retrieve the data, store to a file, and drop some record keeping data
-# version 2 will add retrieval of metadata, maybe.
-# If an associated data file already exists
-# 	Create a checksum of the file on disk
-# 	Retrieve new data into a new file
-# 	Checksum the new file
-# 	If the checksums match, drop some record keeping data and delete new
-#	Else archive existing and shift in the new file
-# Confirm correctness by creating a DataPandas data frame from the file
+	# Retrieve the data, store to a file, and drop some record keeping data
+	csv_filename = socrata_id + ".csv"
+	new_filename = socrata_id + ".csv.new"
+	new_file = os.path.join(data_directory, new_filename) 
+	with open(new_file, 'w') as out:
+		datawriter = csv.writer(out, delimiter=",")
+		for line in client.get(socrata_id, content_type="csv", limit=count):
+			try:
+				datawriter.writerow(line)
+			except(UnicodeEncodeError):
+				#okay, kid, what do you actually want to do here?
+				line = [x.encode('utf-8') for x in line]
+				datawriter.writerow(line)
+				# TODO: log the fact that you had a bad row maybe?
+	out.closed
+	# version 2 will add retrieval of metadata, maybe.
+	# If an associated data file already exists
+	# 	Create a checksum of the file on disk
+	# 	Retrieve new data into a new file
+	# 	Checksum the new file
+	# 	If the checksums match, drop some record keeping data and delete new
+	#	Else archive existing and shift in the new file
+	# Confirm correctness by creating a DataPandas data frame from the file
 
 
 def read_socrata_token(filename:str=SOCRATA_API_CONFIG_FILE, section:str="DEFAULT") -> str:
