@@ -69,6 +69,16 @@ def fetch_socrata_csv(socrata_token=SOCRATA_API_KEY,
 				# TODO: log the fact that you had a bad row maybe?
 	out.closed
 	# version 2 will add retrieval of metadata, maybe.
+
+	# If an older file exists
+	csv_file = os.path.join(data_directory, csv_filename)
+	if os.path.isfile(csv_file):
+		print("Hey HUMAN, I got me a file.")
+		#calc checksum on both and compare
+		# if the files are the different, move .csv to archivedirectory
+		# else remove the new file and do nothing
+	else:
+		os.rename(new_file, csv_file)
 	# If an associated data file already exists
 	# 	Create a checksum of the file on disk
 	# 	Retrieve new data into a new file
