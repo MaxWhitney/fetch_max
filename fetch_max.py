@@ -4,6 +4,7 @@
 from sodapy import Socrata
 import csv
 import configparser
+import filecmp
 import os
 import logging
 
@@ -74,17 +75,20 @@ def fetch_socrata_csv(socrata_token=SOCRATA_API_KEY,
 	csv_file = os.path.join(data_directory, csv_filename)
 	if os.path.isfile(csv_file):
 		print("Hey HUMAN, I got me a file.")
-		#calc checksum on both and compare
-		# if the files are the different, move .csv to archivedirectory
-		# else remove the new file and do nothing
+		if (filecmp.cmp(new_file, csv_file)):
+			# Sorry you did that work. Go ahead and rm the newfile
+			print("Doh! It's the same file as last time.")
+			os.remove(new_file)
+		else:
+			print("THEY'RE DIFFERENT HUMAN, They're different")
+			# TODO: sequence or timestamp thes archived files
+			arch_file = os.path.join(arch_directory, csv_filename)
+			os.rename(new_file, arch_file)
+	
 	else:
+		# There is no previous file, go ahead and shift the new one in
 		os.rename(new_file, csv_file)
-	# If an associated data file already exists
-	# 	Create a checksum of the file on disk
-	# 	Retrieve new data into a new file
-	# 	Checksum the new file
-	# 	If the checksums match, drop some record keeping data and delete new
-	#	Else archive existing and shift in the new file
+	# TODO:
 	# Confirm correctness by creating a DataPandas data frame from the file
 
 
@@ -124,3 +128,11 @@ def setup_directories(df_dir=DF_DIR, arch_dir=ARCH_DIR):
 	arch = os.path.join(df_dir, arch_dir)
 	if not os.path.isdir(arch):
 		os.makedirs(arch)
+
+
+def main():
+	print("This is a utility file. Don't go calling it from cmd, man.")
+
+if __name__ == "__main__":
+	main()
+
