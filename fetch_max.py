@@ -31,7 +31,7 @@ logging.basicConfig(
 	filemode='w',
 	level=logging.DEBUG
 )
-print("Hello fellow humans, say I the fetch_socrata file.")
+print("Hello fellow humans, say I, the fetch_socrata file.")
 logging.info("I, fetch_socrata, said hello to the humans.")
 
 # load up the config file reader
@@ -82,8 +82,10 @@ def fetch_socrata_csv(socrata_token=SOCRATA_API_KEY,
 		else:
 			print("THEY'RE DIFFERENT HUMAN, They're different")
 			# TODO: sequence or timestamp thes archived files
-			arch_file = os.path.join(arch_directory, csv_filename)
-			os.rename(new_file, arch_file)
+			archive_path = os.path.join(data_directory, archive_directory)
+			arch_file = os.path.join(archive_path, csv_filename)
+			os.rename(csv_file, arch_file)
+			os.rename(new_file, csv_file)
 	
 	else:
 		# There is no previous file, go ahead and shift the new one in
